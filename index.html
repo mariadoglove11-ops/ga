@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🐚 Подводный мир — Русский язык 8 класс</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        ocean: { 50:'#e8f4f8', 100:'#b8dce8', 200:'#89c4d8', 300:'#5aacc8', 400:'#2b94b8', 500:'#1a7a9e', 600:'#145f7b', 700:'#0e4458', 800:'#082935', 900:'#021018' },
+        peach: { 50:'#fef5f0', 100:'#fde0d0', 200:'#fbccb0', 300:'#f9b890', 400:'#f7a470', 500:'#f59050', 600:'#d47438', 700:'#b35820', 800:'#923c08', 900:'#712000' },
+        sand: { 50:'#fdf8f0', 100:'#f9edd8', 200:'#f5e2c0', 300:'#f1d7a8', 400:'#edcc90', 500:'#e9c178', 600:'#c9a058', 700:'#a97f38', 800:'#895e18', 900:'#693d00' },
+        coral: { 400:'#ff8a80', 500:'#ff6b6b', 600:'#e05555' },
+        pearl: { 100:'#f0f4ff', 200:'#d8e4f8', 300:'#c0d4f0' }
+      },
+      fontFamily: {
+        title: ['Russo One', 'sans-serif'],
+        body: ['Inter', 'sans-serif']
+      }
+    }
+  }
+}
+</script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Inter', sans-serif; overflow-x: hidden; background: #0a2a3a; }
+  canvas#bgCanvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+  .screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; display: none; flex-direction: column; align-items: center; justify-content: center; overflow-y: auto; }
+  .screen.active { display: flex; }
+  .pixel-border { border: 3px solid rgba(255,255,255,0.3); box-shadow: 0 0 0 3px rgba(0,0,0,0.1), 4px 4px 0 rgba(0,0,0,0.15), inset 0 0 20px rgba(255,255,255,0.05); }
+  .pixel-shadow { text-shadow: 2px 2px 0 rgba(0,0,0,0.3), 4px 4px 0 rgba(0,0,0,0.1); }
+  .glow { animation: glow 2s ease-in-out infinite alternate; }
+  @keyframes glow { from { filter: drop-shadow(0 0 5px rgba(137,196,216,0.5)); } to { filter: drop-shadow(0 0 20px rgba(137,196,216,0.9)); } }
+  @keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+  @keyframes slideUp { from { opacity:0; transform: translateY(40px); } to { opacity:1; transform: translateY(0); } }
+  @keyframes pop { 0% { transform: scale(0.5); opacity:0; } 70% { transform: scale(1.1); } 100% { transform: scale(1); opacity:1; } }
+  @keyframes shake { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-8px)} 40%{transform:translateX(8px)} 60%{transform:translateX(-5px)} 80%{transform:translateX(5px)} }
+  @keyframes confetti { 0%{transform:translateY(0) rotate(0);opacity:1} 100%{transform:translateY(400px) rotate(720deg);opacity:0} }
+  @keyframes bubbleUp { 0%{transform:translateY(0) scale(1);opacity:0.7} 100%{transform:translateY(-100vh) scale(0.3);opacity:0} }
+  .animate-float { animation: float 3s ease-in-out infinite; }
+  .animate-slideUp { animation: slideUp 0.6s ease-out forwards; }
+  .animate-pop { animation: pop 0.4s ease-out forwards; }
+  .animate-shake { animation: shake 0.5s ease-out; }
+  .btn-game { min-height: 48px; min-width: 48px; padding: 12px 24px; border-radius: 12px; font-family: 'Inter', sans-serif; font-weight: 600; font-size: 16px; cursor: pointer; transition: all 0.2s; border: 2px solid rgba(255,255,255,0.2); position: relative; overflow: hidden; }
+  .btn-game:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.3); }
+  .btn-game:active { transform: translateY(0); }
+  .btn-primary { background: linear-gradient(135deg, #2b94b8, #1a7a9e); color: white; }
+  .btn-peach { background: linear-gradient(135deg, #f7a470, #f59050); color: white; }
+  .btn-coral { background: linear-gradient(135deg, #ff8a80, #ff6b6b); color: white; }
+  .btn-sand { background: linear-gradient(135deg, #f5e2c0, #edcc90); color: #5a3e1b; }
+  .option-btn { min-height: 52px; padding: 14px 20px; border-radius: 12px; background: rgba(255,255,255,0.12); border: 2px solid rgba(255,255,255,0.2); color: white; font-size: 15px; cursor: pointer; transition: all 0.2s; text-align: left; width: 100%; backdrop-filter: blur(5px); }
+  .option-btn:hover { background: rgba(255,255,255,0.22); border-color: rgba(137,196,216,0.6); transform: translateX(4px); }
+  .option-btn.correct { background: rgba(76,175,80,0.4) !important; border-color: #4caf50 !important; }
+  .option-btn.wrong { background: rgba(244,67,54,0.4) !important; border-color: #f44336 !important; }
+  .option-btn.selected { background: rgba(137,196,216,0.3); border-color: #89c4d8; }
+  .card { background: rgba(255,255,255,0.08); backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.15); border-radius: 20px; padding: 24px; box-shadow: 0 8px 32px rgba(0,0,0,0.3); }
+  .progress-bar { height: 8px; border-radius: 4px; background: rgba(255,255,255,0.15); overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, #89c4d8, #f7a470); transition: width 0.5s ease; }
+  .depth-badge { background: linear-gradient(135deg, rgba(43,148,184,0.6), rgba(26,122,158,0.8)); border: 1px solid rgba(137,196,216,0.4); border-radius: 20px; padding: 4px 14px; font-size: 13px; color: #b8dce8; }
+  .map-node { width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; cursor: pointer; transition: all 0.3s; border: 3px solid rgba(255,255,255,0.2); position: relative; }
+  .map-node.unlocked { background: linear-gradient(135deg, #2b94b8, #1a7a9e); box-shadow: 0 0 15px rgba(43,148,184,0.5); }
+  .map-node.completed { background: linear-gradient(135deg, #4caf50, #388e3c); box-shadow: 0 0 15px rgba(76,175,80,0.5); }
+  .map-node.locked { background: rgba(255,255,255,0.08); opacity: 0.5; cursor: not-allowed; }
+  .map-node.current { animation: glow 1.5s ease-in-out infinite alternate; transform: scale(1.15); }
+  .map-node:hover:not(.locked) { transform: scale(1.15); }
+  .drag-item { padding: 10px 16px; background: rgba(255,255,255,0.15); border: 2px dashed rgba(255,255,255,0.3); border-radius: 10px; color: white; cursor: grab; user-select: none; font-size: 14px; transition: all 0.2s; min-height: 44px; display: flex; align-items: center; justify-content: center; }
+  .drag-item:active { cursor: grabbing; }
+  .drag-item.dragging { opacity: 0.5; transform: scale(0.95); }
+  .drop-zone { min-height: 50px; border: 2px dashed rgba(137,196,216,0.4); border-radius: 10px; padding: 8px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; color: rgba(255,255,255,0.4); font-size: 13px; }
+  .drop-zone.over { background: rgba(137,196,216,0.2); border-color: #89c4d8; }
+  .drop-zone.filled { border-style: solid; background: rgba(255,255,255,0.1); color: white; }
+  .input-game { background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.2); border-radius: 10px; padding: 12px 16px; color: white; font-size: 16px; font-family: 'Inter', sans-serif; outline: none; transition: all 0.2s; min-height: 48px; width: 100%; }
+  .input-game:focus { border-color: #89c4d8; background: rgba(255,255,255,0.15); box-shadow: 0 0 15px rgba(137,196,216,0.2); }
+  .input-game::placeholder { color: rgba(255,255,255,0.35); }
+  .emoji-icon { font-size: 48px; filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.3)); }
+  .confetti-piece { position: fixed; width: 10px; height: 10px; z-index: 100; animation: confetti 2s ease-out forwards; pointer-events: none; }
+  .reward-popup { position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); z-index: 200; text-align: center; }
+  .tooltip { position: absolute; bottom: 110%; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); color: white; padding: 6px 12px; border-radius: 8px; font-size: 12px; white-space: nowrap; opacity: 0; transition: opacity 0.2s; pointer-events: none; }
+  .map-node:hover .tooltip { opacity: 1; }
+  .feedback-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 150; display: none; align-items: center; justify-content: center; background: rgba(0,0,0,0.5); backdrop-filter: blur(5px); }
+  .feedback-overlay.active { display: flex; }
+  @media (max-width: 640px) {
+    .card { padding: 16px; margin: 8px; }
+    .btn-game { padding: 10px 16px; font-size: 14px; }
+    .option-btn { padding: 12px 14px; font-size: 14px; }
+    .emoji-icon { font-size: 36px; }
+  }
+</style>
+</head>
+<body>
+
+<canvas id="bgCanvas"></canvas>
+
+<!-- ===== ТИТУЛЬНЫЙ ЭКРАН ===== -->
+<div id="screenTitle" class="screen active">
+  <div class="text-center px-4 animate-slideUp">
+    <div class="emoji-icon animate-float mb-4">🐚</div>
+    <h1 class="font-title text-4xl md:text-6xl text-white pixel-shadow mb-3">ПОДВОДНЫЙ МИР</h1>
+    <p class="text-ocean-200 text-lg md:text-xl mb-2 font-body">Симулятор русского языка</p>
+    <p class="text-sand-300 text-sm md:text-base mb-8 font-body">8 класс • Односоставные предложения</p>
+    <div class="card max-w-md mx-auto mb-8">
+      <p class="text-pearl-200 text-sm leading-relaxed">
+        🌊 Ты — юный исследователь океана. Погрузись в глубины, чтобы раскрыть тайны односоставных предложений! 
+        Каждый уровень — новая глубина, новое знание. Собери все жемчужины грамотности!
+      </p>
+    </div>
+    <button onclick="startGame()" class="btn-game btn-primary text-lg px-10 py-4 glow">
+      🤿 Начать погружение
+    </button>
+    <p class="text-ocean-300 text-xs mt-6 opacity-60">10 уровней • ~15 минут</p>
+  </div>
+</div>
+
+<!-- ===== ЭКРАН КАРТЫ ===== -->
+<div id="screenMap" class="screen">
+  <div class="w-full max-w-2xl px-4 py-6">
+    <div class="flex items-center justify-between mb-6">
+      <div>
+        <h2 class="font-title text-2xl text-white pixel-shadow">Карта глубин</h2>
+        <p class="text-ocean-200 text-sm mt-1">Выбери локацию для погружения</p>
+      </div>
+      <div class="text-right">
+        <div class="text-sand-300 text-sm">🐚 Жемчужины</div>
+        <div id="pearlCount" class="font-title text-2xl text-peach-400">0/10</div>
+      </div>
+    </div>
+    <div class="progress-bar mb-6">
+      <div id="mapProgress" class="progress-fill" style="width:0%"></div>
+    </div>
+    <div id="mapGrid" class="grid grid-cols-5 gap-3 md:gap-4 justify-items-center"></div>
+    <div class="text-center mt-6">
+      <button onclick="showScreen('screenTitle')" class="btn-game btn-sand text-sm">← На поверхность</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== ЭКРАН ЗАДАНИЯ ===== -->
+<div id="screenTask" class="screen">
+  <div class="w-full max-w-2xl px-4 py-4">
+    <div class="flex items-center justify-between mb-4">
+      <button onclick="showScreen('screenMap')" class="btn-game btn-sand text-sm py-2 px-4">← Карта</button>
+      <div class="depth-badge" id="depthBadge">🌊 0 м</div>
+      <div class="text-sand-300 text-sm" id="taskCounter">1/10</div>
+    </div>
+    <div class="progress-bar mb-4">
+      <div id="taskProgress" class="progress-fill" style="width:0%"></div>
+    </div>
+    <div id="taskContainer" class="card animate-slideUp">
+      <!-- Динамическое содержимое -->
+    </div>
+    <div id="taskActions" class="mt-4 flex gap-3 justify-center">
+      <!-- Кнопки действий -->
+    </div>
+  </div>
+</div>
+
+<!-- ===== ФИНАЛЬНЫЙ ЭКРАН ===== -->
+<div id="screenFinal" class="screen">
+  <div class="text-center px-4 animate-slideUp max-w-lg">
+    <div class="emoji-icon animate-float mb-4" id="finalEmoji">🏆</div>
+    <h2 class="font-title text-3xl md:text-4xl text-white pixel-shadow mb-3" id="finalTitle">Погружение завершено!</h2>
+    <p class="text-ocean-200 mb-6" id="finalSubtitle">Ты прошёл все глубины подводного мира</p>
+    <div class="card mb-6">
+      <div class="grid grid-cols-2 gap-4 text-center">
+        <div>
+          <div class="text-3xl mb-1">🐚</div>
+          <div class="font-title text-2xl text-peach-400" id="finalPearls">0</div>
+          <div class="text-ocean-300 text-xs">Жемчужин</div>
+        </div>
+        <div>
+          <div class="text-3xl mb-1">⭐</div>
+          <div class="font-title text-2xl text-sand-400" id="finalPercent">0%</div>
+          <div class="text-ocean-300 text-xs">Точность</div>
+        </div>
+      </div>
+      <div class="mt-4 pt-4 border-t border-white/10">
+        <div class="font-title text-xl" id="finalGrade" style="color:#4caf50">Отлично!</div>
+        <p class="text-ocean-300 text-sm mt-1" id="finalGradeText">Ты настоящий знаток односоставных предложений!</p>
+      </div>
+    </div>
+    <div class="flex gap-3 justify-center flex-wrap">
+      <button onclick="restartGame()" class="btn-game btn-primary">🔄 Пройти заново</button>
+      <button onclick="showScreen('screenMap')" class="btn-game btn-sand">🗺️ Карта</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== ОБРАТНАЯ СВЯЗЬ ===== -->
+<div id="feedbackOverlay" class="feedback-overlay">
+  <div class="card text-center animate-pop max-w-sm mx-4" id="feedbackCard">
+    <div class="text-5xl mb-3" id="feedbackEmoji">✅</div>
+    <h3 class="font-title text-xl text-white mb-2" id="feedbackTitle">Правильно!</h3>
+    <p class="text-ocean-200 text-sm mb-4" id="feedbackText">Отличная работа!</p>
+    <button onclick="closeFeedback()" class="btn-game btn-primary" id="feedbackBtn">Далее →</button>
+  </div>
+</div>
+
+<script>
+// ===== CANVAS BACKGROUND =====
+const canvas = document.getElementById('bgCanvas');
+const ctx = canvas.getContext('2d');
+let bubbles = [];
+let fishes = [];
+let particles = [];
+
+function resizeCanvas() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+class Bubble {
+  constructor() { this.reset(); this.y = Math.random() * canvas.height; }
+  reset() {
+    this.x = Math.random() * canvas.width;
+    this.y = canvas.height + 20;
+    this.r = Math.random() * 6 + 2;
+    this.speed = Math.random() * 1.5 + 0.5;
+    this.wobble = Math.random() * Math.PI * 2;
+    this.wobbleSpeed = Math.random() * 0.02 + 0.01;
+    this.opacity = Math.random() * 0.3 + 0.1;
+  }
+  update() {
+    this.y -= this.speed;
+    this.wobble += this.wobbleSpeed;
+    this.x += Math.sin(this.wobble) * 0.5;
+    if (this.y < -20) this.reset();
+  }
+  draw() {
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(184, 220, 232, ${this.opacity})`;
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(this.x - this.r * 0.3, this.y - this.r * 0.3, this.r * 0.25, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(255, 255, 255, ${this.opacity * 1.5})`;
+    ctx.fill();
+  }
+}
+
+class Fish {
+  constructor() { this.reset(); this.x = Math.random() * canvas.width; }
+  reset() {
+    this.dir = Math.random() > 0.5 ? 1 : -1;
+    this.x = this.dir === 1 ? -30 : canvas.width + 30;
+    this.y = Math.random() * canvas.height * 0.7 + canvas.height * 0.1;
+    this.speed = Math.random() * 1 + 0.3;
+    this.size = Math.random() * 8 + 6;
+    this.color = ['#f7a470','#ff8a80','#89c4d8','#f5e2c0','#c0d4f0'][Math.floor(Math.random()*5)];
+    this.wobble = Math.random() * Math.PI * 2;
+  }
+  update() {
+    this.x += this.speed * this.dir;
+    this.wobble += 0.05;
+    this.y += Math.sin(this.wobble) * 0.3;
+    if ((this.dir === 1 && this.x > canvas.width + 40) || (this.dir === -1 && this.x < -40)) this.reset();
+  }
+  draw() {
+    ctx.save();
+    ctx.translate(this.x, this.y);
+    ctx.scale(this.dir, 1);
+    ctx.fillStyle = this.color;
+    ctx.globalAlpha = 0.4;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, this.size, this.size * 0.5, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(-this.size, 0);
+    ctx.lineTo(-this.size * 1.6, -this.size * 0.5);
+    ctx.lineTo(-this.size * 1.6, this.size * 0.5);
+    ctx.closePath();
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    ctx.restore();
+  }
+}
+
+for (let i = 0; i < 40; i++) bubbles.push(new Bubble());
+for (let i = 0; i < 6; i++) fishes.push(new Fish());
+
+function drawBackground() {
+  const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+  grad.addColorStop(0, '#0a3d5c');
+  grad.addColorStop(0.3, '#0d4f6e');
+  grad.addColorStop(0.6, '#0a3a52');
+  grad.addColorStop(1, '#061e2e');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // Light rays
+  ctx.save();
+  ctx.globalAlpha = 0.03;
+  for (let i = 0; i < 5; i++) {
+    const x = canvas.width * (0.2 + i * 0.15);
+    ctx.beginPath();
+    ctx.moveTo(x - 20, 0);
+    ctx.lineTo(x + 60, canvas.height);
+    ctx.lineTo(x - 60, canvas.height);
+    ctx.closePath();
+    ctx.fillStyle = '#89c4d8';
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+function animate() {
+  drawBackground();
+  bubbles.forEach(b => { b.update(); b.draw(); });
+  fishes.forEach(f => { f.update(); f.draw(); });
+  requestAnimationFrame(animate);
+}
+animate();
+
+// ===== GAME STATE =====
+const state = {
+  currentLevel: 0,
+  score: 0,
+  completed: new Array(10).fill(false),
+  answers: new Array(10).fill(null),
+  unlockedLevel: 0
+};
+
+const locations = [
+  { name: 'Коралловый риф', depth: 5, emoji: '🪸', desc: 'Поверхность' },
+  { name: 'Водорослевый лес', depth: 15, emoji: '🌿', desc: '15 м' },
+  { name: 'Пещера медуз', depth: 30, emoji: '🪼', desc: '30 м' },
+  { name: 'Затонувший корабль', depth: 50, emoji: '🚢', desc: '50 м' },
+  { name: 'Подводная поляна', depth: 75, emoji: '🐚', desc: '75 м' },
+  { name: 'Глубокий каньон', depth: 100, emoji: '🏔️', desc: '100 м' },
+  { name: 'Светящийся грот', depth: 150, emoji: '💡', desc: '150 м' },
+  { name: 'Дворец Посейдона', depth: 200, emoji: '🏛️', desc: '200 м' },
+  { name: 'Бездна тайн', depth: 250, emoji: '🌀', desc: '250 м' },
+  { name: 'Жемчужная сокровищница', depth: 300, emoji: '💎', desc: '300 м' }
+];
+
+// ===== ЗАДАНИЯ =====
+const tasks = [
+  // 1. Выбор ответа
+  {
+    type: 'choice',
+    title: 'Определи тип предложения',
+    text: '«Люблю грозу в начале мая.» — Какой это тип односоставного предложения?',
+    options: [
+      'Неопределённо-личное',
+      'Определённо-личное',
+      'Безличное',
+      'Назывное'
+    ],
+    correct: 1,
+    explanation: 'Сказуемое «люблю» стоит в форме 1-го лица ед. ч. — это определённо-личное предложение.'
+  },
+  // 2. Верно/неверно
+  {
+    type: 'truefalse',
+    title: 'Верно или неверно?',
+    text: '«Вечереет.» — это безличное предложение.',
+    correct: true,
+    explanation: 'Верно! «Вечереет» — безличный глагол, подлежащего нет и быть не может. Это безличное предложение.'
+  },
+  // 3. Вставка слова
+  {
+    type: 'fill',
+    title: 'Вставь пропущенное слово',
+    text: 'Вставь подходящее слово, чтобы получилось безличное предложение:\n\n«___ не спалось всю ночь.»',
+    placeholder: 'Введи слово...',
+    correct: ['мне'],
+    explanation: '«Мне не спалось» — безличное предложение. Слово «мне» стоит в дательном падеже, действие происходит само по себе.'
+  },
+  // 4. Установи соответствие (клик)
+  {
+    type: 'match',
+    title: 'Установи соответствие',
+    text: 'Сопоставь предложения с их типами. Нажми на предложение, затем на тип.',
+    pairs: [
+      { sentence: 'Цыплят по осени считают.', type: 'Обобщённо-личное' },
+      { sentence: 'В комнате тихо.', type: 'Безличное' },
+      { sentence: 'Зимний вечер.', type: 'Назывное' },
+      { sentence: 'В дверь постучали.', type: 'Неопределённо-личное' }
+    ],
+    explanation: 'Обобщённо-личное — пословица; безличное — состояние; назывное — только подлежащее; неопределённо-личное — действие без указания лица.'
+  },
+  // 5. Исправь ошибку
+  {
+    type: 'fix',
+    title: 'Исправь ошибку',
+    text: 'Ученик написал: «Светает — это назывное предложение.»\n\nВыбери правильный тип:',
+    options: [
+      'Назывное',
+      'Определённо-личное',
+      'Безличное',
+      'Неопределённо-личное'
+    ],
+    correct: 2,
+    explanation: '«Светает» — безличный глагол, обозначающий состояние природы. Это безличное предложение, а не назывное.'
+  },
+  // 6. Расставь по порядку
+  {
+    type: 'order',
+    title: 'Расставь слова по порядку',
+    text: 'Составь односоставное определённо-личное предложение из слов:',
+    words: ['эту', 'книгу', 'уже', 'прочитал'],
+    correct: ['уже', 'прочитал', 'эту', 'книгу'],
+    explanation: '«Уже прочитал эту книгу» — определённо-личное предложение (сказуемое в форме прош. вр. ед. ч. муж. р., подразумевается «я» или «он»).'
+  },
+  // 7. Открытый ответ
+  {
+    type: 'open',
+    title: 'Напиши пример',
+    text: 'Напиши любое неопределённо-личное предложение.\n\nПодсказка: сказуемое в форме 3-го лица мн. ч. или мн. ч. прош. вр.',
+    placeholder: 'Например: В дверь постучали.',
+    keywords: ['ют', 'ют ', 'ли ', 'ут ', 'ат '],
+    explanation: 'Неопределённо-личные предложения: «Говорят, будет дождь», «В дверь постучали», «На улице поют» и т.д.'
+  },
+  // 8. Расстановка знаков
+  {
+    type: 'punctuation',
+    title: 'Расставь знаки препинания',
+    text: 'Расставь запятые в предложении (введи предложение целиком с нужными знаками):\n\n«Смеркалось и на небе зажглись первые звёзды.»',
+    placeholder: 'Введи предложение с запятыми...',
+    correct: ['смеркалось, и на небе зажглись первые звёзды.', 'смеркалось,и на небе зажглись первые звёзды.'],
+    explanation: 'Запятая ставится перед «и», соединяющим две грамматические основы: «смеркалось» и «зажглись звёзды».'
+  },
+  // 9. Морфология
+  {
+    type: 'morphology',
+    title: 'Морфологический анализ',
+    text: 'В предложении «Мне холодно» слово «холодно» является:',
+    options: [
+      'Кратким прилагательным',
+      'Наречием',
+      'Категорией состояния (предикативом)',
+      'Полным прилагательным'
+    ],
+    correct: 2,
+    explanation: '«Холодно» в безличном предложении — категория состояния (предикатив). Оно выступает главным членом — сказуемым.'
+  },
+  // 10. Код/шифр
+  {
+    type: 'cipher',
+    title: 'Расшифруй послание',
+    text: 'Каждая буква шифра — первая буква типа предложения.\n\nШифр: О-Б-Н-О\n\nРасшифруй, записав типы через запятую:',
+    placeholder: 'Например: Определённо-личное, ...',
+    correct: ['определённо-личное,безличное,неопределённо-личное,обобщённо-личное', 'определенно-личное,безличное,неопределенно-личное,обобщенно-личное'],
+    explanation: 'О — Определённо-личное, Б — Безличное, Н — Неопределённо-личное, О — Обобщённо-личное. Четыре основных типа односоставных предложений с глагольным сказуемым!'
+  }
+];
+
+// ===== SCREEN MANAGEMENT =====
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  if (id === 'screenMap') renderMap();
+}
+
+// ===== START GAME =====
+function startGame() {
+  showScreen('screenMap');
+}
+
+// ===== MAP =====
+function renderMap() {
+  const grid = document.getElementById('mapGrid');
+  grid.innerHTML = '';
+  const completedCount = state.completed.filter(Boolean).length;
+  document.getElementById('pearlCount').textContent = `${completedCount}/10`;
+  document.getElementById('mapProgress').style.width = `${completedCount * 10}%`;
+
+  locations.forEach((loc, i) => {
+    const node = document.createElement('div');
+    let cls = 'map-node ';
+    if (state.completed[i]) cls += 'completed';
+    else if (i <= state.unlockedLevel) cls += 'unlocked current';
+    else cls += 'locked';
+    node.className = cls;
+    node.innerHTML = `
+      <span>${loc.emoji}</span>
+      <div class="tooltip">${loc.name} (${loc.depth}м)</div>
+    `;
+    if (i <= state.unlockedLevel) {
+      node.onclick = () => openTask(i);
+    }
+    grid.appendChild(node);
+  });
+}
+
+// ===== OPEN TASK =====
+function openTask(level) {
+  state.currentLevel = level;
+  const task = tasks[level];
+  const loc = locations[level];
+  showScreen('screenTask');
+
+  document.getElementById('depthBadge').textContent = `🌊 ${loc.depth} м — ${loc.name}`;
+  document.getElementById('taskCounter').textContent = `${level + 1}/10`;
+  document.getElementById('taskProgress').style.width = `${(level) * 10}%`;
+
+  const container = document.getElementById('taskContainer');
+  const actions = document.getElementById('taskActions');
+  actions.innerHTML = '';
+
+  let html = `
+    <div class="mb-2">
+      <span class="text-ocean-300 text-xs uppercase tracking-wider">${getTaskTypeLabel(task.type)}</span>
+    </div>
+    <h3 class="font-title text-xl text-white pixel-shadow mb-3">${task.title}</h3>
+    <p class="text-pearl-200 text-sm leading-relaxed mb-5 whitespace-pre-line">${task.text}</p>
+  `;
+
+  switch (task.type) {
+    case 'choice':
+      html += renderChoice(task);
+      break;
+    case 'truefalse':
+      html += renderTrueFalse(task);
+      break;
+    case 'fill':
+      html += renderFill(task);
+      break;
+    case 'match':
+      html += renderMatch(task);
+      break;
+    case 'fix':
+      html += renderChoice(task);
+      break;
+    case 'order':
+      html += renderOrder(task);
+      break;
+    case 'open':
+      html += renderOpen(task);
+      break;
+    case 'punctuation':
+      html += renderOpen(task);
+      break;
+    case 'morphology':
+      html += renderChoice(task);
+      break;
+    case 'cipher':
+      html += renderOpen(task);
+      break;
+  }
+
+  container.innerHTML = html;
+  container.className = 'card animate-slideUp';
+
+  // Post-render setup
+  if (task.type === 'match') setupMatch();
+  if (task.type === 'order') setupOrder();
+}
+
+function getTaskTypeLabel(type) {
+  const labels = {
+    choice: '🎯 Выбор ответа',
+    truefalse: '✅ Верно / Неверно',
+    fill: '✏️ Вставка слова',
+    match: '🔗 Установи соответствие',
+    fix: '🔧 Исправь ошибку',
+    order: '📝 Расставь по порядку',
+    open: '💬 Открытый ответ',
+    punctuation: '📌 Расстановка знаков',
+    morphology: '🔬 Морфология',
+    cipher: '🔐 Код / Шифр'
+  };
+  return labels[type] || type;
+}
+
+// ===== RENDER FUNCTIONS =====
+function renderChoice(task) {
+  let html = '<div class="space-y-3" id="optionsContainer">';
+  task.options.forEach((opt, i) => {
+    html += `<button class="option-btn" onclick="selectOption(${i})" id="opt${i}">${opt}</button>`;
+  });
+  html += '</div>';
+  return html;
+}
+
+function renderTrueFalse(task) {
+  return `
+    <div class="flex gap-4 justify-center" id="optionsContainer">
+      <button class="option-btn text-center flex-1" onclick="selectTF(true)" id="optTrue">✅ Верно</button>
+      <button class="option-btn text-center flex-1" onclick="selectTF(false)" id="optFalse">❌ Неверно</button>
+    </div>
+  `;
+}
+
+function renderFill(task) {
+  return `
+    <input type="text" class="input-game" id="fillInput" placeholder="${task.placeholder}" autocomplete="off">
+    <div class="mt-4 text-center">
+      <button class="btn-game btn-primary" onclick="checkFill()">Проверить</button>
+    </div>
+  `;
+}
+
+function renderMatch(task) {
+  let html = '<div class="grid grid-cols-1 md:grid-cols-2 gap-4">';
+  html += '<div class="space-y-2"><p class="text-ocean-300 text-xs mb-2">Предложения:</p>';
+  task.pairs.forEach((p, i) => {
+    html += `<button class="option-btn match-sentence" data-idx="${i}" onclick="selectMatchSentence(${i})" id="ms${i}">${p.sentence}</button>`;
+  });
+  html += '</div><div class="space-y-2"><p class="text-ocean-300 text-xs mb-2">Типы:</p>';
+  const shuffledTypes = [...task.pairs.map(p => p.type)].sort(() => Math.random() - 0.5);
+  shuffledTypes.forEach((t, i) => {
+    html += `<button class="option-btn match-type" data-type="${t}" onclick="selectMatchType('${t.replace(/'/g, "\\'")}')">${t}</button>`;
+  });
+  html += '</div></div>';
+  html += '<div class="mt-4 text-center"><button class="btn-game btn-primary" onclick="checkMatch()">Проверить</button></div>';
+  return html;
+}
+
+function renderOrder(task) {
+  const shuffled = [...task.words].sort(() => Math.random() - 0.5);
+  let html = '<div class="flex flex-wrap gap-2 mb-4" id="wordBank">';
+  shuffled.forEach((w, i) => {
+    html += `<div class="drag-item order-word" data-word="${w}" onclick="addWord(this)">${w}</div>`;
+  });
+  html += '</div>';
+  html += '<p class="text-ocean-300 text-xs mb-2">Твой ответ (нажимай на слова выше):</p>';
+  html += '<div class="flex flex-wrap gap-2 min-h-[50px] p-3 rounded-xl bg-white/5 border border-white/10" id="answerZone"></div>';
+  html += '<div class="mt-4 flex gap-3 justify-center">';
+  html += '<button class="btn-game btn-sand text-sm" onclick="clearOrder()">Очистить</button>';
+  html += '<button class="btn-game btn-primary" onclick="checkOrder()">Проверить</button>';
+  html += '</div>';
+  return html;
+}
+
+function renderOpen(task) {
+  return `
+    <textarea class="input-game" id="openInput" rows="3" placeholder="${task.placeholder}" style="resize:vertical"></textarea>
+    <div class="mt-4 text-center">
+      <button class="btn-game btn-primary" onclick="checkOpen()">Проверить</button>
+    </div>
+  `;
+}
+
+// ===== INTERACTION HANDLERS =====
+let selectedOption = null;
+
+function selectOption(idx) {
+  const task = tasks[state.currentLevel];
+  if (task._answered) return;
+  document.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+  document.getElementById(`opt${idx}`).classList.add('selected');
+  selectedOption = idx;
+
+  // Auto-check for choice/fix/morphology
+  task._answered = true;
+  const isCorrect = idx === task.correct;
+  setTimeout(() => {
+    document.getElementById(`opt${idx}`).classList.add(isCorrect ? 'correct' : 'wrong');
+    if (!isCorrect) {
+      document.getElementById(`opt${task.correct}`).classList.add('correct');
+    }
+    showFeedback(isCorrect, task.explanation);
+  }, 400);
+}
+
+function selectTF(val) {
+  const task = tasks[state.currentLevel];
+  if (task._answered) return;
+  task._answered = true;
+  const isCorrect = val === task.correct;
+  const btnId = val ? 'optTrue' : 'optFalse';
+  document.getElementById(btnId).classList.add(isCorrect ? 'correct' : 'wrong');
+  if (!isCorrect) {
+    document.getElementById(task.correct ? 'optTrue' : 'optFalse').classList.add('correct');
+  }
+  setTimeout(() => showFeedback(isCorrect, task.explanation), 400);
+}
+
+function checkFill() {
+  const task = tasks[state.currentLevel];
+  if (task._answered) return;
+  task._answered = true;
+  const val = document.getElementById('fillInput').value.trim().toLowerCase();
+  const isCorrect = task.correct.includes(val);
+  document.getElementById('fillInput').style.borderColor = isCorrect ? '#4caf50' : '#f44336';
+  setTimeout(() => showFeedback(isCorrect, task.explanation), 400);
+}
+
+// Match
+let matchState = { selectedSentence: null, matches: {} };
+
+function setupMatch() {
+  matchState = { selectedSentence: null, matches: {} };
+}
+
+function selectMatchSentence(idx) {
+  const task = tasks[state.currentLevel];
+  if (task._answered) return;
+  document.querySelectorAll('.match-sentence').forEach(b => b.classList.remove('selected'));
+  document.getElementById(`ms${idx}`).classList.add('selected');
+  matchState.selectedSentence = idx;
+}
+
+function selectMatchType(type) {
+  const task = tasks[state.currentLevel];
+  if (task._answered || matchState.selectedSentence === null) return;
+  matchState.matches[matchState.selectedSentence] = type;
+  document.getElementById(`ms${matchState.selectedSentence}`).textContent =
+    `${task.pairs[matchState.selectedSentence].sentence} → ${type}`;
+  document.getElementById(`ms${matchState.selectedSentence}`).classList.remove('selected');
+  document.getElementById(`ms${matchState.selectedSentence}`).classList.add('selected');
+  matchState.selectedSentence = null;
+}
+
+function checkMatch() {
+  const task = tasks[state.currentLevel];
+  if (task._answered) return;
+  task._answered = true;
+  let correctCount = 0;
+  task.pairs.forEach((p, i) => {
+    if (matchState.matches[i] === p.type) correctCount++;
+  });
+  const isCorrect = correctCount === task.pairs.length;
+  setTimeout(() => showFeedback(isCorrect, task.explanation + `\n\nСовпадений: ${correctCount}/${task.pairs.length}`), 300);
+}
+
+// Order
+let orderWords = [];
+
+function setupOrder() { orderWords = []; }
+
+function addWord(el) {
+  const task = tasks[state.currentLevel];
+  if (task._answered) return;
+  const word = el.dataset.word;
+  orderWords.push(word);
+  el.style.display = 'none';
+  const zone = document.getElementById('answerZone');
+  const chip = document.createElement('div');
+  chip.className = 'drag-item';
+  chip.textContent = word;
+  chip.style.cursor = 'pointer';
+  chip.style.background = 'rgba(137,196,216,0.2)';
+  chip.style.borderColor = '#89c4d8';
+  chip.onclick = () => {
+    if (task._answered) return;
+    orderWords = orderWords.filter(w => w !== word || orderWords.indexOf(w) !== orderWords.lastIndexOf(w) ? true : false);
+    // Remove first occurrence
+    const idx = orderWords.indexOf(word);
+    if (idx > -1) orderWords.splice(idx, 1);
+    chip.remove();
+    // Show back in bank
+    document.querySelectorAll('.order-word').forEach(w => {
+      if (w.dataset.word === word && w.style.display === 'none') {
+        w.style.display = '';
+        return;
+      }
+    });
+  };
+  zone.appendChild(chip);
+}
+
+function clearOrder() {
+  orderWords = [];
+  document.getElementById('answerZone').innerHTML = '';
+  document.querySelectorAll('.order-word').forEach(w => w.style.display = '');
+}
+
+function checkOrder() {
+  const task = tasks[state.currentLevel];
+  if (task._answered) return;
+  task._answered = true;
+  const isCorrect = JSON.stringify(orderWords) === JSON.stringify(task.correct);
+  setTimeout(() => showFeedback(isCorrect, task.explanation), 300);
+}
+
+function checkOpen() {
+  const task = tasks[state.currentLevel];
+  if (task._answered) return;
+  task._answered = true;
+  const val = document.getElementById('openInput').value.trim().toLowerCase().replace(/\s+/g, ' ');
+
+  let isCorrect = false;
+  if (task.correct) {
+    isCorrect = task.correct.some(c => val.includes(c.toLowerCase()));
+  }
+  if (task.keywords) {
+    isCorrect = task.keywords.some(k => val.includes(k.toLowerCase()));
+  }
+
+  // For open answers, be lenient
+  if (task.type === 'open' && val.length > 5) isCorrect = true;
+
+  document.getElementById('openInput').style.borderColor = isCorrect ? '#4caf50' : '#f44336';
+  setTimeout(() => showFeedback(isCorrect, task.explanation), 400);
+}
+
+// ===== FEEDBACK =====
+function showFeedback(isCorrect, explanation) {
+  const overlay = document.getElementById('feedbackOverlay');
+  const emoji = document.getElementById('feedbackEmoji');
+  const title = document.getElementById('feedbackTitle');
+  const text = document.getElementById('feedbackText');
+
+  if (isCorrect) {
+    state.score++;
+    state.completed[state.currentLevel] = true;
+    if (state.currentLevel >= state.unlockedLevel && state.currentLevel < 9) {
+      state.unlockedLevel = state.currentLevel + 1;
+    }
+    emoji.textContent = '🐚';
+    title.textContent = 'Жемчужина найдена!';
+    title.style.color = '#4caf50';
+    spawnConfetti();
+  } else {
+    emoji.textContent = '🌊';
+    title.textContent = 'Не совсем...';
+    title.style.color = '#ff8a80';
+  }
+  text.textContent = explanation;
+  overlay.classList.add('active');
+}
+
+function closeFeedback() {
+  document.getElementById('feedbackOverlay').classList.remove('active');
+  if (state.currentLevel >= 9) {
+    showFinal();
+  } else {
+    showScreen('screenMap');
+  }
+}
+
+// ===== CONFETTI =====
+function spawnConfetti() {
+  const colors = ['#f7a470', '#89c4d8', '#ff8a80', '#f5e2c0', '#4caf50', '#c0d4f0'];
+  for (let i = 0; i < 30; i++) {
+    const piece = document.createElement('div');
+    piece.className = 'confetti-piece';
+    piece.style.left = Math.random() * 100 + 'vw';
+    piece.style.top = '-10px';
+    piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+    piece.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+    piece.style.width = (Math.random() * 8 + 5) + 'px';
+    piece.style.height = (Math.random() * 8 + 5) + 'px';
+    piece.style.animationDuration = (Math.random() * 1.5 + 1) + 's';
+    piece.style.animationDelay = (Math.random() * 0.5) + 's';
+    document.body.appendChild(piece);
+    setTimeout(() => piece.remove(), 3000);
+  }
+}
+
+// ===== FINAL SCREEN =====
+function showFinal() {
+  showScreen('screenFinal');
+  const percent = Math.round((state.score / 10) * 100);
+  document.getElementById('finalPearls').textContent = state.score;
+  document.getElementById('finalPercent').textContent = percent + '%';
+
+  let grade, gradeText, emoji;
+  if (percent >= 90) {
+    grade = 'Отлично! 🌟';
+    gradeText = 'Ты настоящий знаток односоставных предложений! Подводный мир покорён!';
+    emoji = '🏆';
+  } else if (percent >= 70) {
+    grade = 'Хорошо! 👍';
+    gradeText = 'Отличный результат! Ещё немного практики — и будет идеально.';
+    emoji = '🐬';
+  } else if (percent >= 50) {
+    grade = 'Удовлетворительно';
+    gradeText = 'Неплохо, но стоит повторить тему односоставных предложений.';
+    emoji = '🐠';
+  } else {
+    grade = 'Нужна практика';
+    gradeText = 'Не расстраивайся! Повтори теорию и попробуй снова.';
+    emoji = '🐡';
+  }
+
+  document.getElementById('finalGrade').textContent = grade;
+  document.getElementById('finalGradeText').textContent = gradeText;
+  document.getElementById('finalEmoji').textContent = emoji;
+
+  if (percent >= 90) spawnConfetti();
+}
+
+// ===== RESTART =====
+function restartGame() {
+  state.currentLevel = 0;
+  state.score = 0;
+  state.completed.fill(false);
+  state.answers.fill(null);
+  state.unlockedLevel = 0;
+  tasks.forEach(t => t._answered = false);
+  showScreen('screenMap');
+}
+</script>
+</body>
+</html>
